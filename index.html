@@ -16,8 +16,8 @@
       --bg: #0f172a;
       --card-bg: #1e293b;
       --text: #f8fafc;
-      --alban: #38bdf8;
-      --gaspard: #10b981;
+      --alban: #38bdf8;     /* Bleu */
+      --gaspard: #10b981;   /* Vert */
       --accent: #e2e8f0;
     }
 
@@ -53,8 +53,9 @@
     }
 
     .countdown {
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       color: #94a3b8;
+      font-weight: 500;
     }
 
     .scores-grid {
@@ -117,7 +118,7 @@
     .card.gaspard .vote-btn { background: var(--gaspard); }
 
     .vote-btn:disabled {
-      opacity: 0.3;
+      opacity: 0.35;
       cursor: not-allowed;
     }
 
@@ -175,13 +176,13 @@
 
   <header>
     <h1>Tirage au sort Bébé</h1>
-    <div class="countdown" id="countdown">--</div>
+    <div class="countdown" id="countdown">Calcul du terme...</div>
   </header>
 
   <div class="scores-grid">
     <div class="card alban">
       <div class="name">Alban</div>
-      <div class="counter" id="count-alban">0</div>
+      <div class="counter" id="count-alban">1</div>
       <button class="vote-btn" id="btn-alban" onclick="enregistrerVote('Alban')">+1 Alban</button>
     </div>
 
@@ -203,10 +204,10 @@
   </div>
 
   <script>
-    // Utilisation d'une nouvelle clé pour repartir sur une base propre
-    const STORAGE_KEY = 'bebe_votes_data_v2';
-    const DUE_DATE = new Date(2026, 10, 15); // 15 novembre 2026 (mois indexé à 10 en JS)
+    const STORAGE_KEY = 'bebe_votes_data_v3';
+    // 15 novembre 2026 à minuit
+    const DUE_DATE = new Date(2026, 10, 15, 0, 0, 0);
 
     function getTodayString() {
       const d = new Date();
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '
+      return `${d.getFullYear()}-${String(d.getMonth() + 1
