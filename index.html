@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <title>Alban ou Gaspard ?</title>
+
+  <!-- Métadonnées PWA pour iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Prénom Bébé">
+  <link rel="apple-touch-icon" href="https://fav.farm/👶">
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --alban: #38bdf8;
+      --gaspard: #f472b6;
+      --accent: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      margin: 0;
+      padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom) 16px;
+      min-height: 100vh;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header {
+      text-align: center;
+      margin-top: 15px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin: 0 0 6px 0;
+      font-weight: 700;
+    }
+
+    .countdown {
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    .scores-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      width: 100%;
+      max-width: 420px;
+      margin: 20px 0;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 24px;
+      padding: 20px 16px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .card.alban { border-top: 4px solid var(--alban); }
+    .card.gaspard { border-top: 4px solid var(--gaspard); }
+
+    .name {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .card.alban .name { color: var(--alban); }
+    .card.gaspard .name { color: var(--gaspard); }
+
+    .counter {
+      font-size: 3.5rem;
+      font-weight: 800;
+      line-height: 1;
+      margin: 12px 0 18px 0;
+    }
+
+    .vote-btn {
+      width: 100%;
+      padding: 14px 10px;
+      border-radius: 16px;
+      border: none;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0f172a;
+      cursor: pointer;
+      transition: transform 0.1s ease, opacity 0.2s;
+    }
+
+    .vote-btn:active {
+      transform: scale(0.96);
+    }
+
+    .card.alban .vote-btn { background: var(--alban); }
+    .card.gaspard .vote-btn { background: var(--gaspard); }
+
+    .vote-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .status-box {
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 16px;
+      padding: 12px 18px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    .undo-btn {
+      background: none;
+      border: none;
+      color: #f87171;
+      font-size: 0.8rem;
+      text-decoration: underline;
+      margin-top: 6px;
+      cursor: pointer;
+      display: inline-block;
+    }
+
+    .history-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 16px;
+      margin-top: 15px;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    .history-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      margin-bottom: 8px;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Tirage au sort Bébé</h1>
+    <div class="countdown" id="countdown">Calcul du terme...</div>
+  </header>
+
+  <div class="scores-grid">
+    <div class="card alban">
+      <div class="name">Alban</div>
+      <div class="counter" id="count-alban">0</div>
+      <button class="vote-btn" id="btn-alban" onclick="enregistrerVote('Alban')">+1 Alban</button>
+    </div>
+
+    <div class="card gaspard">
+      <div class="name">Gaspard</div>
+      <div class="counter" id="count-gaspard">0</div>
+      <button class="vote-btn" id="btn-gaspard" onclick="enregistrerVote('Gaspard')">+1 Gaspard</button>
+    </div>
+  </div>
+
+  <div class="status-box">
+    <div id="status-msg">Chargement...</div>
+    <button id="undo-btn" class="undo-btn" style="display: none;" onclick="annulerDernierVote()">Annuler le vote d'aujourd'hui</button>
+  </div>
+
+  <div class="history-card">
+    <div class="history-title">Historique des tirages</div>
+    <div id="history-list"></div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'bebe_votes_data_v1';
+    const DUE_DATE = new Date('2026-11-15T00:00:00');
+
+    // Date locale au format AAAA-MM-JJ
+    function getTodayString() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function initData() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+      // Initialisation par défaut : hier (01/11/2026) tiré pour Alban
+      const initial = {
+        votes: [
+          { date: '2026-11-01', choice: 'Alban' }
+        ]
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(initial));
+      return initial;
+    }
+
+    let state = initData();
+
+    function updateCountdown() {
+      const now = new Date();
+      const diff = DUE_DATE - now;
+      const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+      const el = document.getElementById('countdown');
+      if (days > 0) {
+        el.textContent = `Terme : 15 nov. 2026 (${days} jour${days > 1 ? 's' : ''} restant${days > 1 ? 's' : ''})`;
+      } else if (days === 0) {
+        el.textContent = "Le grand jour est arrivé !";
+      } else {
+        el.textContent = "Bébé est là !";
+      }
+    }
+
+    function render() {
+      const countAlban = state.votes.filter(v => v.choice === 'Alban').length;
+      const countGaspard = state.votes.filter(v => v.choice === 'Gaspard').length;
+
+      document.getElementById('count-alban').textContent = countAlban;
+      document.getElementById('count-gaspard').textContent = countGaspard;
+
+      const today = getTodayString();
+      const todayVote = state.votes.find(v => v.date === today);
+
+      const btnAlban = document.getElementById('btn-alban');
+      const btnGaspard = document.getElementById('btn-gaspard');
+      const statusMsg = document.getElementById('status-msg');
+      const undoBtn = document.getElementById('undo-btn');
+
+      if (todayVote) {
+        btnAlban.disabled = true;
+        btnGaspard.disabled = true;
+        statusMsg.innerHTML = `Tirage effectué aujourd'hui : <strong>${todayVote.choice}</strong> ✨`;
+        undoBtn.style.display = 'inline-block';
+      } else {
+        btnAlban.disabled = false;
+        btnGaspard.disabled = false;
+        statusMsg.textContent = "Aucun tirage validé aujourd'hui. À vous de jouer !";
+        undoBtn.style.display = 'none';
+      }
+
+      // Historique
+      const historyList = document.getElementById('history-list');
+      historyList.innerHTML = '';
+      [...state.votes].reverse().forEach(v => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        const parts = v.date.split('-');
+        const formattedDate = `${parts[2]}/${parts[1]}`;
+        const color = v.choice === 'Alban' ? 'var(--alban)' : 'var(--gaspard)';
+        item.innerHTML = `<span>${formattedDate}</span><strong style="color: ${color}">${v.choice}</strong>`;
+        historyList.appendChild(item);
+      });
+    }
+
+    function enregistrerVote(prenom) {
+      const today = getTodayString();
+      if (state.votes.some(v => v.date === today)) return;
+
+      state.votes.push({ date: today, choice: prenom });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      render();
+    }
+
+    function annulerDernierVote() {
+      const today = getTodayString();
+      state.votes = state.votes.filter(v => v.date !== today);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      render();
+    }
+
+    updateCountdown();
+    render();
+  </script>
+</body>
+</html>
