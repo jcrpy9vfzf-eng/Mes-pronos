@@ -17,8 +17,7 @@
       --card-bg: #1e293b;
       --text: #f8fafc;
       --alban: #38bdf8;     /* Bleu */
-      --gaspard: #10b981;   /* Vert */
-      --accent: #e2e8f0;
+      --gaspard: #10b981;   /* Vert émeraude */
     }
 
     * {
@@ -151,7 +150,7 @@
       border-radius: 20px;
       padding: 16px;
       margin-top: 15px;
-      max-height: 160px;
+      max-height: 170px;
       overflow-y: auto;
     }
 
@@ -166,8 +165,8 @@
     .history-item {
       display: flex;
       justify-content: space-between;
-      font-size: 0.85rem;
-      padding: 6px 0;
+      font-size: 0.9rem;
+      padding: 7px 0;
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
   </style>
@@ -176,7 +175,7 @@
 
   <header>
     <h1>Tirage au sort Bébé</h1>
-    <div class="countdown" id="countdown">Calcul du terme...</div>
+    <div class="countdown" id="countdown">Terme : 15 nov. 2026 (13 jours restants)</div>
   </header>
 
   <div class="scores-grid">
@@ -194,20 +193,151 @@
   </div>
 
   <div class="status-box">
-    <div id="status-msg">Prêt pour le tirage</div>
-    <button id="undo-btn" class="undo-btn" style="display: none;" onclick="annulerDernierVote()">Annuler le vote d'aujourd'hui</button>
+    <div id="status-msg">Prêt pour le tirage du jour !</div>
+    <button id="undo-btn" class="undo-btn" style="display: none;" onclick="annulerDernierVote()">Annuler le tirage d'aujourd'hui</button>
   </div>
 
   <div class="history-card">
     <div class="history-title">Historique des tirages</div>
-    <div id="history-list"></div>
+    <div id="history-list">
+      <div class="history-item">
+        <span>01/11</span>
+        <strong style="color: var(--alban)">Alban</strong>
+      </div>
+    </div>
   </div>
 
   <script>
-    const STORAGE_KEY = 'bebe_votes_data_v3';
-    // 15 novembre 2026 à minuit
-    const DUE_DATE = new Date(2026, 10, 15, 0, 0, 0);
+    var STORAGE_KEY = 'bebe_votes_data_v4';
+    var DUE_DATE = new Date(2026, 10, 15, 0, 0, 0);
 
     function getTodayString() {
-      const d = new Date();
-      return `${d.getFullYear()}-${String(d.getMonth() + 1
+      var d = new Date();
+      var m = String(d.getMonth() + 1);
+      if (m.length < 2) m = '0' + m;
+      var jour = String(d.getDate());
+      if (jour.length < 2) jour = '0' + jour;
+      return d.getFullYear() + '-' + m + '-' + jour;
+    }
+
+    function chargerDonnees() {
+      var parDefaut = [{ date: '2026-11-01', choice: 'Alban' }];
+      try {
+        var brute = localStorage.getItem(STORAGE_KEY);
+        if (brute) {
+          var parsed = JSON.parse(brute);
+          if (parsed && Array.isArray(parsed.votes) && parsed.votes.length > 0) {
+            return parsed.votes;
+          }
+        }
+      } catch (err) {}
+      sauvegarderDonnees(parDefaut);
+      return parDefaut;
+    }
+
+    function sauvegarderDonnees(votes) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ votes: votes }));
+      } catch (err) {}
+    }
+
+    var votes = chargerDonnees();
+
+    function actualiserCompteARebours() {
+      var maintenant = new Date();
+      var diffMilli = DUE_DATE.getTime() - maintenant.getTime();
+      var jours = Math.ceil(diffMilli / (1000 * 60 * 60 * 24));
+      var el = document.getElementById('countdown');
+      if (!el) return;
+
+      if (jours > 1) {
+        el.textContent = "Terme : 15 nov. 2026 (" + jours + " jours restants)";
+      } else if (jours === 1) {
+        el.textContent = "Terme : demain 15 nov. 2026 !";
+      } else if (jours === 0) {
+        el.textContent = "Terme aujourd'hui 15 nov. 2026 ! 🎉";
+      } else {
+        el.textContent = "Bébé est arrivé ! 👶";
+      }
+    }
+
+    function actualiserAffichage() {
+      var totalAlban = 0;
+      var totalGaspard = 0;
+      for (var i = 0; i < votes.length; i++) {
+        if (votes[i].choice === 'Alban') totalAlban++;
+        if (votes[i].choice === 'Gaspard') totalGaspard++;
+      }
+
+      document.getElementById('count-alban').textContent = totalAlban;
+      document.getElementById('count-gaspard').textContent = totalGaspard;
+
+      var aujourdhui = getTodayString();
+      var voteAujourdhui = null;
+      for (var j = 0; j < votes.length; j++) {
+        if (votes[j].date === aujourdhui) {
+          voteAujourdhui = votes[j];
+          break;
+        }
+      }
+
+      var btnAlban = document.getElementById('btn-alban');
+      var btnGaspard = document.getElementById('btn-gaspard');
+      var statusMsg = document.getElementById('status-msg');
+      var undoBtn = document.getElementById('undo-btn');
+
+      if (voteAujourdhui) {
+        btnAlban.disabled = true;
+        btnGaspard.disabled = true;
+        statusMsg.innerHTML = "Tirage validé aujourd'hui : <strong>" + voteAujourdhui.choice + "</strong> ✨";
+        undoBtn.style.display = 'inline-block';
+      } else {
+        btnAlban.disabled = false;
+        btnGaspard.disabled = false;
+        statusMsg.textContent = "Aucun tirage validé aujourd'hui. À vous de jouer !";
+        undoBtn.style.display = 'none';
+      }
+
+      var historyList = document.getElementById('history-list');
+      historyList.innerHTML = '';
+      
+      // Afficher du plus récent au plus ancien
+      for (var k = votes.length - 1; k >= 0; k--) {
+        var v = votes[k];
+        var item = document.createElement('div');
+        item.className = 'history-item';
+        
+        var dateAffichee = v.date;
+        var parts = v.date.split('-');
+        if (parts.length === 3) {
+          dateAffichee = parts[2] + '/' + parts[1];
+        }
+
+        var couleur = (v.choice === 'Alban') ? 'var(--alban)' : 'var(--gaspard)';
+        item.innerHTML = '<span>' + dateAffichee + '</span><strong style="color: ' + couleur + '">' + v.choice + '</strong>';
+        historyList.appendChild(item);
+      }
+    }
+
+    function enregistrerVote(prenom) {
+      var aujourdhui = getTodayString();
+      for (var i = 0; i < votes.length; i++) {
+        if (votes[i].date === aujourdhui) return;
+      }
+      votes.push({ date: aujourdhui, choice: prenom });
+      sauvegarderDonnees(votes);
+      actualiserAffichage();
+    }
+
+    function annulerDernierVote() {
+      var aujourdhui = getTodayString();
+      votes = votes.filter(function(v) { return v.date !== aujourdhui; });
+      sauvegarderDonnees(votes);
+      actualiserAffichage();
+    }
+
+    actualiserCompteARebours();
+    actualiserAffichage();
+  </script>
+</body>
+</html>
